@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+  <meta charset="UTF-8">
+  <title>我的个人网站</title>
+  <link rel="stylesheet" href="style.css">
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f4f4f9;
+      margin: 0;
+      padding: 0;
+    }
+
+    header {
+      background: #007bff;
+      color: white;
+      padding: 10px 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    header h1 {
+      margin: 0;
+    }
+
+    nav button {
+      margin-left: 10px;
+      padding: 6px 12px;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+
+    nav button:hover {
+      background: #0056b3;
+      color: white;
+    }
+
+    main {
+      padding: 20px;
+      max-width: 800px;
+      margin: auto;
+    }
+
+    .content-section {
+      background: white;
+      border-radius: 12px;
+      padding: 20px;
+      margin-bottom: 20px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    }
+
+    .content-section.hidden {
+      display: none;
+    }
+
+    .section-header {
+      font-size: 1.2em;
+      font-weight: bold;
+      margin-bottom: 10px;
+    }
+
+    /* 表单样式 */
+    .postForm input, .postForm textarea, #ddlForm input, #ddlForm button, #photoForm input, #photoForm button {
+      display: block;
+      width: 100%;
+      margin-bottom: 10px;
+      padding: 8px;
+      border-radius: 6px;
+      border: 1px solid #ccc;
+    }
+
+    .postForm button, #ddlForm button, #photoForm button {
+      background: #007bff;
+      color: white;
+      border: none;
+      cursor: pointer;
+    }
+
+    .postForm button:hover, #ddlForm button:hover, #photoForm button:hover {
+      background: #0056b3;
+    }
+
+    /* 相册样式 */
+    .gallery {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 10px;
+    }
+    .gallery img {
+      width: 150px;
+      height: 150px;
+      object-fit: cover;
+      border-radius: 6px;
+    }
+
+    /* 音乐播放器固定底部 */
+    #music-player {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      z-index: 9999;
+      background: rgba(255,255,255,0.95);
+      border-radius: 10px;
+      padding: 10px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+      border: 1px solid #ddd;
+    }
+
+    #play-music {
+      padding: 8px 15px;
+      border-radius: 6px;
+      border: none;
+      background: #007bff;
+      color: white;
+      font-size: 14px;
+      cursor: pointer;
+      transition: background 0.3s;
+    }
+
+    #play-music:hover {
+      background: #0056b3;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>🌟 我的个人网站</h1>
+    <nav>
+      <button onclick="showSection('food')">🍜 美食</button>
+      <button onclick="showSection('diary')">📖 日记</button>
+      <button onclick="showSection('notes')">💻 笔记</button>
+      <button onclick="showSection('ddl')">📅 DDL</button>
+      <button onclick="showSection('album')">📸 相册</button>
+      <button onclick="showSection('music')">🎵 音乐</button>
+    </nav>
+  </header>
+
+  <main>
+    <!-- 美食 -->
+    <section id="food" class="content-section">
+      <div class="section-header">🍜 美食记录</div>
+      <form class="postForm" data-type="food">
+        <input type="text" name="title" placeholder="美食名称" required>
+        <textarea name="content" placeholder="描述一下..." required></textarea>
+        <button type="submit">发布</button>
+      </form>
+      <div class="postList" id="foodPosts"></div>
+    </section>
+
+    <!-- 日记 -->
+    <section id="diary" class="content-section hidden">
+      <div class="section-header">📖 写日记</div>
+      <form action="/diary" method="post" enctype="multipart/form-data">
+        <input type="text" name="title" placeholder="标题" required><br><br>
+        <textarea name="content" placeholder="内容..." required></textarea><br><br>
+        <input type="file" name="photo" accept="image/*"><br><br>
+        <button type="submit">发布</button>
+      </form>
+      <div class="postList" id="diaryPosts"></div>
+    </section>
+
+    <!-- 笔记 -->
+    <section id="notes" class="content-section hidden">
+      <div class="section-header">💻 学习笔记</div>
+      <form class="postForm" data-type="notes">
+        <input type="text" name="title" placeholder="笔记标题" required>
+        <textarea name="content" placeholder="写下学习内容..." required></textarea>
+        <button type="submit">发布</button>
+      </form>
+      <div class="postList" id="notesPosts"></div>
+    </section>
+
+    <!-- DDL -->
+    <section id="ddl" class="content-section hidden">
+      <div class="section-header">📅 DDL 倒计时</div>
+      <form id="ddlForm">
+        <input type="text" id="ddlTitle" placeholder="任务" required>
+        <input type="date" id="ddlDate" required>
+        <button type="submit">添加</button>
+      </form>
+      <div id="ddlList"></div>
+    </section>
+
+    <!-- 相册 -->
+    <section id="album" class="content-section hidden">
+      <div class="section-header">📸 我的相册</div>
+      <form id="photoForm" enctype="multipart/form-data">
+        <input type="file" name="photo" accept="image/*" required>
+        <button type="submit">上传</button>
+      </form>
+      <div id="photoGallery" class="gallery"></div>
+    </section>
+
+    <!-- 音乐 -->
+    <section id="music" class="content-section">
+      <div class="section-header">🎵 音乐播放器</div>
+      <audio id="bg-music" controls>
+        <source src="/uploads/summer.mp3" type="audio/mpeg">
+        你的浏览器不支持 audio 标签。
+      </audio>
+      <button id="play-music">播放音乐</button>
+    </section>
+  </main>
+
+  <script src="script.js"></script>
+</body>
+</html>

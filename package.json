@@ -1,0 +1,27 @@
+{
+  "name": "myweb",
+  "version": "1.0.0",
+  "description": "个人网站：美食、日记、笔记，支持图片上传和SQLite数据库",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js",
+    "dev": "nodemon index.js"
+  },
+  "keywords": [
+    "personal-website",
+    "blog",
+    "sqlite",
+    "express"
+  ],
+  "author": " gyyixingkusa",
+  "license": "MIT",
+  "dependencies": {
+    "express": "^4.19.2",
+    "multer": "^1.4.5-lts.1",
+    "sqlite": "^5.1.1",
+    "sqlite3": "^5.1.7"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.0"
+  }
+}

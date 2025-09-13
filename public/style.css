@@ -1,0 +1,24 @@
+.gallery {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 10px;
+}
+
+.gallery img {
+  width: 100%;
+  border-radius: 8px;
+  object-fit: cover;
+}
+.gallery img:hover {
+  transform: scale(1.05);
+  transition: transform 0.3s;
+}
+
+/* Add styles for card header */
+.card-header {
+  background-color: #f0f0f0;
+  color: #333;
+  font-size: 1.5em;
+  padding: 10px;
+  border-bottom: 2px solid #ccc;
+}
