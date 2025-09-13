@@ -331,7 +331,17 @@ app.get("/", (req, res) => {
         <p>你可以叫我葛什么</p>
         <p>文章 77 | 分类 1 | 标签 1 | 时间轴 76</p>
         <a href="/about">了解我</a>
-
+ <div id="quote-block" style="
+            margin-top: 15px;
+            padding: 12px;
+            border-radius: 8px;
+            background: #fbf9f9ff;
+           
+            font-style: italic;
+            color: #1f0505ff;
+          ">
+            <p id="quote">这里会显示一条语录</p>
+          </div>
        <!-- 社交媒体链接 -->
 <div class="social-links">
   <a href="https://github.com" target="_blank"><i class="fab fa-github"></i></a>
@@ -349,12 +359,41 @@ app.get("/", (req, res) => {
       </div>
     </div>
 
-    ${musicPlayerHTML}
+  ${musicPlayerHTML}
+      </main>
+
+      <script>
+        // 自动切换语录功能
+        document.addEventListener('DOMContentLoaded', () => {
+          const quotes = [
+            "我并不是立意要错过，可是我一直都这样做，错过花满枝桠的昨日，还要错过今朝 ",
+            "于高山之巅，方见大河奔涌；于群峰之上，更觉长风浩荡。",
+            "我一个人没有觉得孤独，说的浪漫些，我完全自由",
+            "我抬头发现本以为只照着我的月亮也照着别人，于是心生嫉妒，低头发誓再也不看月亮。",
+            "  我希望正在读这句话的人永远幸福 "
+          ];
+          const quoteElement = document.getElementById('quote');
+
+          function updateQuote() {
+            const randomIndex = Math.floor(Math.random() * quotes.length);
+            quoteElement.textContent = quotes[randomIndex];
+          }
+
+          // 初始显示
+          updateQuote();
+
+          // 每 5 秒切换一次
+          setInterval(updateQuote, 5000);
+        });
+      </script>
+      <script src="script.js"></script>
+    </body>
+    </html>
   `);
 });
 
-
 // ==================== 日记 ====================
+
 app.get("/diary", (req, res) => {
   res.send(`
     <h2>写日记</h2>
@@ -528,7 +567,7 @@ app.get("/about", (req, res) => {
 });
 
 // ==================== 日记、笔记、美食、穿搭的统一逻辑 ====================
-const sections = ["diary", "food", "note", "outfit"];
+const sections = ["diary", "note", "food", "outfit"];
 
 sections.forEach(section => {
   app.get(`/${section}`, (req, res) => {
@@ -536,15 +575,17 @@ sections.forEach(section => {
       <style>
         body {
           font-family: Arial, sans-serif;
-          background: url('/uploads/${section}-bg.jpg') no-repeat center center;
+          background: url('/uploads/sun.png') no-repeat center center;
           background-size: cover;
           padding: 20px;
           color: #333;
         }
 
         h2 {
-          font-size: 2.5em; /* Increased font size */
+          font-size: 2.5em;
           text-align: center;
+          color: white;
+          text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.7);
         }
 
         form {
@@ -557,8 +598,22 @@ sections.forEach(section => {
         }
 
         input, textarea, button {
-          font-size: 1.2em; /* Increased font size */
+          font-size: 1.2em;
           margin-bottom: 10px;
+        }
+
+        button {
+          background: #007bff;
+          color: white;
+          border: none;
+          padding: 10px 20px;
+          border-radius: 6px;
+          cursor: pointer;
+          transition: background 0.3s;
+        }
+
+        button:hover {
+          background: #0056b3;
         }
       </style>
 
@@ -569,7 +624,7 @@ sections.forEach(section => {
         <input type="file" name="photo" accept="image/*"><br><br>
         <button type="submit">发布</button>
       </form>
-      <p><a href="/">返回首页</a></p>
+      <p style="text-align: center; margin-top: 20px;"><a href="/">返回首页</a></p>
     `);
   });
 
@@ -604,6 +659,26 @@ sections.forEach(section => {
     html += `<p><a href="/">返回首页</a></p>`;
     res.send(html);
   });
+});
+
+// ==================== 动态统计数量 ====================
+app.get('/stats', async (req, res) => {
+  try {
+    const articles = await db.get('SELECT COUNT(*) AS count FROM diary');
+    const categories = 1; // 示例值，可根据实际需求动态计算
+    const tags = 1; // 示例值，可根据实际需求动态计算
+    const timeline = await db.get('SELECT COUNT(*) AS count FROM diary');
+
+    res.json({
+      articles: articles.count,
+      categories,
+      tags,
+      timeline: timeline.count
+    });
+  } catch (error) {
+    console.error('获取统计数据失败:', error);
+    res.status(500).json({ error: '获取统计数据失败' });
+  }
 });
 
 app.listen(port, () => {
