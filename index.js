@@ -372,6 +372,18 @@ app.get("/", (req, res) => {
             "我一个人没有觉得孤独，说的浪漫些，我完全自由",
             "我抬头发现本以为只照着我的月亮也照着别人，于是心生嫉妒，低头发誓再也不看月亮。",
             "  我希望正在读这句话的人永远幸福 "
+            “忧愁是心上下的一场雨，不必急于放晴，允许自己慢慢穿过这片潮湿。”
+
+              “心有时候也会感冒，它会打喷嚏、流眼泪——这只是提醒你，它需要休息和治愈。”
+
+             “不必为自己的敏感道歉。正是那些细微的裂痕，让光有了照进内心的缝隙。”
+            “我们总在人群中藏起心事，却忘了每个人手里都握着一段看不见的伤疤。”
+
+“夜晚的沉默不是空洞的，它铺满了无数人未说出口的故事——你并不孤单。”
+
+“眼泪是人类共同的语言，无需翻译也能被理解。” 
+
+
           ];
           const quoteElement = document.getElementById('quote');
 
@@ -407,7 +419,7 @@ function renderForm(type) {
     <style>
       body {
         font-family: Arial, sans-serif;
-        background: url('/uploads/sun.png') no-repeat center center;
+        background: url('/uploads/ocean.png') no-repeat center center;
         background-size: cover;
         padding: 20px;
         color: #333;
@@ -532,18 +544,29 @@ app.get('/diary/:id', async (req, res) => {
   
   res.send(`
     <style>
+      body {
+        font-family: Arial, sans-serif;
+        background: url('/uploads/sky.png') no-repeat center center fixed;
+        background-size: cover;
+        margin: 0;
+        padding: 40px 20px;
+        min-height: 100vh;
+      }
       .article {
         max-width: 800px;
-        margin: 40px auto;
-        padding: 20px;
-        background: white;
-        border-radius: 12px;
-        box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        margin: 0 auto;
+        background: rgba(255, 255, 255, 0.95);
+        backdrop-filter: blur(10px);
+        border-radius: 20px;
+        box-shadow: 0 4px 25px rgba(0, 0, 0, 0.15);
+        padding: 30px;
+        border: 1px solid rgba(255, 255, 255, 0.2);
       }
       .article img {
         max-width: 100%;
-        border-radius: 8px;
+        border-radius: 12px;
         margin: 20px 0;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.1);
       }
       .article-content {
         line-height: 1.8;
@@ -585,16 +608,17 @@ app.get('/diary-list', async (req, res) => {
     <style>
       body {
         font-family: Arial, sans-serif;
-        background: #f4f4f9;
+        background: url('/uploads/sky.png') no-repeat center center fixed;
+        background-size: cover;
         margin: 0;
         padding: 0;
       }
 
       .banner {
         width: 100%;
-        height: 200px;
-        background: url('/uploads/banner.jpg') no-repeat center center;
-        background-size: cover;
+        padding: 60px 0;
+        background: rgba(0, 0, 0, 0.5);
+        backdrop-filter: blur(5px);
         display: flex;
         justify-content: center;
         align-items: center;
@@ -602,6 +626,7 @@ app.get('/diary-list', async (req, res) => {
         font-size: 2.5em;
         font-weight: bold;
         text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.7);
+        margin-bottom: 30px;
       }
 
       .timeline {
@@ -703,23 +728,30 @@ app.get('/diary-list', async (req, res) => {
       <div class="card-container">
         ${diaries.map(diary => `
           <div class="card">
-            <span class="card-time">${new Date(diary.created_at).toLocaleDateString()}</span>
+            <span class="card-time">${new Date(diary.created_at).toLocaleString()}</span>
             <div class="card-content">
               <h3>${diary.title}</h3>
               <div style="max-height: 100px; overflow: hidden;">
                 ${marked(diary.content.substring(0, 200))}...
               </div>
-              <a href="/diary/${diary.id}">查看详情</a>
-              <form method="post" action="/diary/${diary.id}/delete" onsubmit="return confirm('确定要删除这篇日记吗？');" style="display:inline-block; margin-left:8px;">
-                <button type="submit" style="background:#dc3545; border:none; color:white; padding:6px 10px; border-radius:6px; cursor:pointer;">删除</button>
-              </form>
+              <div class="card-buttons">
+                <a href="/diary/${diary.id}">查看详情</a>
+                <form method="post" action="/diary/${diary.id}/delete" onsubmit="return confirm('确定要删除这篇日记吗？');" style="display:inline;">
+                  <button type="submit">删除</button>
+                </form>
+              </div>
             </div>
             ${diary.photo ? `<img src="${diary.photo}" alt="Diary Photo">` : ''}
           </div>
         `).join('')}
       </div>
     </div>
-    <p style="text-align: center; margin: 20px;"><a href="/">返回首页</a></p>
+    <p style="text-align: center; margin: 20px;">
+      <a href="/" style="display: inline-block; padding: 10px 25px; background: rgba(255, 255, 255, 0.9); color: #333; text-decoration: none; border-radius: 25px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); transition: all 0.3s ease;">
+        返回首页
+      </a>
+    </p>
+    ${musicPlayerHTML}
   `);
 });
 
@@ -734,7 +766,7 @@ app.get('/food-list', async (req, res) => {
     <style>
       body {
         font-family: Arial, sans-serif;
-        background: url('/uploads/sun.png') no-repeat center center fixed;
+        background: url('/uploads/food.png') no-repeat center center fixed;
         background-size: cover;
         margin: 0;
         padding: 0;
@@ -892,7 +924,7 @@ app.get('/note-list', async (req, res) => {
     <style>
       body {
         font-family: Arial, sans-serif;
-        background: url('/uploads/sun.png') no-repeat center center fixed;
+        background: url('/uploads/rain.png') no-repeat center center fixed;
         background-size: cover;
         margin: 0;
         padding: 0;
@@ -1050,7 +1082,7 @@ app.get('/outfit-list', async (req, res) => {
     <style>
       body {
         font-family: Arial, sans-serif;
-        background: url('/uploads/sun.png') no-repeat center center fixed;
+        background: url('/uploads/eee.png') no-repeat center center fixed;
         background-size: cover;
         margin: 0;
         padding: 0;
@@ -1284,7 +1316,7 @@ app.get('/note/:id', async (req, res) => {
     <style>
       body {
         font-family: Arial, sans-serif;
-        background: url('/uploads/sun.png') no-repeat center center fixed;
+        background: url('/uploads/rain.png') no-repeat center center fixed;
         background-size: cover;
         margin: 0;
         padding: 40px 20px;
@@ -1329,7 +1361,7 @@ app.get('/food/:id', async (req, res) => {
     <style>
       body {
         font-family: Arial, sans-serif;
-        background: url('/uploads/sun.png') no-repeat center center fixed;
+        background: url('/uploads/food.png') no-repeat center center fixed;
         background-size: cover;
         margin: 0;
         padding: 40px 20px;
@@ -1380,7 +1412,7 @@ app.get('/outfit/:id', async (req, res) => {
     <style>
       body {
         font-family: Arial, sans-serif;
-        background: url('/uploads/sun.png') no-repeat center center fixed;
+        background: url('/uploads/lubi.png') no-repeat center center fixed;
         background-size: cover;
         margin: 0;
         padding: 40px 20px;
