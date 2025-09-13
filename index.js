@@ -555,12 +555,14 @@ app.get('/diary/:id', async (req, res) => {
       .article {
         max-width: 800px;
         margin: 0 auto;
-        background: rgba(255, 255, 255, 0.95);
-        backdrop-filter: blur(10px);
+        background: rgba(255, 255, 255, 0.6);
+        -webkit-backdrop-filter: blur(20px);
+        backdrop-filter: blur(20px);
         border-radius: 20px;
-        box-shadow: 0 4px 25px rgba(0, 0, 0, 0.15);
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
         padding: 30px;
-        border: 1px solid rgba(255, 255, 255, 0.2);
+        border: 1px solid rgba(255, 255, 255, 0.3);
+        transition: all 0.3s ease;
       }
       .article img {
         max-width: 100%;
@@ -614,6 +616,22 @@ app.get('/diary-list', async (req, res) => {
         padding: 0;
       }
 
+      .card, .article {
+        background: rgba(255, 255, 255, 0.7) !important;
+        -webkit-backdrop-filter: blur(10px) !important;
+        backdrop-filter: blur(10px) !important;
+        border-radius: 15px !important;
+        border: 1px solid rgba(255, 255, 255, 0.3) !important;
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1) !important;
+        transition: all 0.3s ease !important;
+      }
+
+      .card:hover, .article:hover {
+        transform: translateY(-5px) !important;
+        box-shadow: 0 15px 45px rgba(0, 0, 0, 0.15) !important;
+        background: rgba(255, 255, 255, 0.8) !important;
+      }
+
       .banner {
         width: 100%;
         padding: 60px 0;
@@ -653,9 +671,12 @@ app.get('/diary-list', async (req, res) => {
       }
 
       .card {
-        background: white;
-        border-radius: 10px;
-        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+        background: rgba(255, 255, 255, 0.7);
+        -webkit-backdrop-filter: blur(10px);
+        backdrop-filter: blur(10px);
+        border-radius: 15px;
+        border: 1px solid rgba(255, 255, 255, 0.3);
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
         padding: 20px;
         width: 100%;
         max-width: 800px;
@@ -664,6 +685,7 @@ app.get('/diary-list', async (req, res) => {
         align-items: center;
         text-align: left;
         position: relative;
+        transition: all 0.3s ease;
       }
 
       .card::before {
@@ -770,6 +792,22 @@ app.get('/food-list', async (req, res) => {
         background-size: cover;
         margin: 0;
         padding: 0;
+      }
+
+      .card, .article {
+        background: rgba(255, 255, 255, 0.7) !important;
+        -webkit-backdrop-filter: blur(10px) !important;
+        backdrop-filter: blur(10px) !important;
+        border-radius: 15px !important;
+        border: 1px solid rgba(255, 255, 255, 0.3) !important;
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1) !important;
+        transition: all 0.3s ease !important;
+      }
+
+      .card:hover, .article:hover {
+        transform: translateY(-5px) !important;
+        box-shadow: 0 15px 45px rgba(0, 0, 0, 0.15) !important;
+        background: rgba(255, 255, 255, 0.8) !important;
       }
 
       .banner {
@@ -930,6 +968,22 @@ app.get('/note-list', async (req, res) => {
         padding: 0;
       }
 
+      .card, .article {
+        background: rgba(255, 255, 255, 0.7) !important;
+        -webkit-backdrop-filter: blur(10px) !important;
+        backdrop-filter: blur(10px) !important;
+        border-radius: 15px !important;
+        border: 1px solid rgba(255, 255, 255, 0.3) !important;
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1) !important;
+        transition: all 0.3s ease !important;
+      }
+
+      .card:hover, .article:hover {
+        transform: translateY(-5px) !important;
+        box-shadow: 0 15px 45px rgba(0, 0, 0, 0.15) !important;
+        background: rgba(255, 255, 255, 0.8) !important;
+      }
+
       .banner {
         width: 100%;
         padding: 60px 0;
@@ -1082,10 +1136,26 @@ app.get('/outfit-list', async (req, res) => {
     <style>
       body {
         font-family: Arial, sans-serif;
-        background: url('/uploads/eee.png') no-repeat center center fixed;
+        background: url('/uploads/beauty.png') no-repeat center center fixed;
         background-size: cover;
         margin: 0;
         padding: 0;
+      }
+
+      .card, .article {
+        background: rgba(255, 255, 255, 0.7) !important;
+        -webkit-backdrop-filter: blur(10px) !important;
+        backdrop-filter: blur(10px) !important;
+        border-radius: 15px !important;
+        border: 1px solid rgba(255, 255, 255, 0.3) !important;
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1) !important;
+        transition: all 0.3s ease !important;
+      }
+
+      .card:hover, .article:hover {
+        transform: translateY(-5px) !important;
+        box-shadow: 0 15px 45px rgba(0, 0, 0, 0.15) !important;
+        background: rgba(255, 255, 255, 0.8) !important;
       }
 
       .banner {
@@ -1412,7 +1482,7 @@ app.get('/outfit/:id', async (req, res) => {
     <style>
       body {
         font-family: Arial, sans-serif;
-        background: url('/uploads/lubi.png') no-repeat center center fixed;
+        background: url('/uploads/beauty.png') no-repeat center center fixed;
         background-size: cover;
         margin: 0;
         padding: 40px 20px;
@@ -1421,12 +1491,14 @@ app.get('/outfit/:id', async (req, res) => {
       .article {
         max-width: 800px;
         margin: 0 auto;
-        background: rgba(255, 255, 255, 0.95);
+        background: rgba(255, 255, 255, 0.7);
+        -webkit-backdrop-filter: blur(10px);
         backdrop-filter: blur(10px);
-        border-radius: 20px;
-        box-shadow: 0 4px 25px rgba(0, 0, 0, 0.15);
+        border-radius: 15px;
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
         padding: 30px;
-        border: 1px solid rgba(255, 255, 255, 0.2);
+        border: 1px solid rgba(255, 255, 255, 0.3);
+        transition: all 0.3s ease;
       }
     </style>
 
