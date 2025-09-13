@@ -191,7 +191,7 @@ app.get("/", (req, res) => {
         body {
           margin: 0;
           font-family: Arial, sans-serif;
-          background: #f4f4f9;
+          background: #f8e8fb9e;
           display: flex;
           flex-direction: column;
           align-items: center;
@@ -221,7 +221,7 @@ app.get("/", (req, res) => {
           width: 220px;
           background: white;
           border-radius: 12px;
-          box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+          box-shadow: 0 4px 15px rgba(231, 172, 172, 0.2);
           padding: 20px;
         }
 
@@ -260,7 +260,7 @@ app.get("/", (req, res) => {
           margin-left: 20px;
           background: white;
           border-radius: 12px;
-          box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+          box-shadow: 0 4px 15px rgba(8, 0, 0, 0.2);
           padding: 15px;
           text-align: center;
           width: 300px; /* 缩小卡片宽度 */
@@ -286,13 +286,13 @@ app.get("/", (req, res) => {
           margin-top: 10px;
           padding: 6px 12px; /* 缩小按钮大小 */
           border-radius: 6px;
-          background: #ffffffff;
+          background: #ffc3c9bc;
           color: white;
           text-decoration: none;
         }
 
         .profile a:hover {
-          background: #f6faffff;
+          background: #040404ff;
         }
 
         /* 社交媒体链接 */
@@ -318,10 +318,10 @@ app.get("/", (req, res) => {
       <div class="sidebar">
         <h3>📂 分类导航</h3>
         <ul>
-          <li><a href="/diary">📖 日记</a> | <a href="/diary-list">查看</a></li>
-          <li><a href="/food">🍜 美食</a> | <a href="/food-list">查看</a></li>
-          <li><a href="/note">💻 笔记</a> | <a href="/note-list">查看</a></li>
-          <li><a href="/outfit">👗 穿搭</a> | <a href="/outfit-list">查看</a></li>
+          <li><a href="/diary">📖 日记 diary</a> | <a href="/diary-list">check</a></li>
+          <li><a href="/food">🍜 美食 food</a> | <a href="/food-list">check</a></li>
+          <li><a href="/note">💻 笔记 notebook</a> | <a href="/note-list">check</a></li>
+          <li><a href="/outfit">👗 穿搭 outfit</a> | <a href="/outfit-list">check</a></li>
         </ul>
       </div>
 
@@ -330,13 +330,13 @@ app.get("/", (req, res) => {
         <img src="/uploads/touxiang.png" alt="头像">
         <h2>moon</h2>
         <p>你可以叫我葛什么</p>
-        <p>文章 77 | 分类 1 | 标签 1 | 时间轴 76</p>
-        <a href="/about">了解我</a>
+        <p>文章 | 分类   | 标签   | 时间轴  </p>
+        <a href="/about" class="main-button">more about me</a>
  <div id="quote-block" style="
             margin-top: 15px;
             padding: 12px;
             border-radius: 8px;
-            background: #fbf9f9ff;
+            background: #ffffff1c;
            
             font-style: italic;
             color: #1f0505ff;
@@ -371,17 +371,13 @@ app.get("/", (req, res) => {
             "于高山之巅，方见大河奔涌；于群峰之上，更觉长风浩荡。",
             "我一个人没有觉得孤独，说的浪漫些，我完全自由",
             "我抬头发现本以为只照着我的月亮也照着别人，于是心生嫉妒，低头发誓再也不看月亮。",
-            "  我希望正在读这句话的人永远幸福 "
-            “忧愁是心上下的一场雨，不必急于放晴，允许自己慢慢穿过这片潮湿。”
-
-              “心有时候也会感冒，它会打喷嚏、流眼泪——这只是提醒你，它需要休息和治愈。”
-
-             “不必为自己的敏感道歉。正是那些细微的裂痕，让光有了照进内心的缝隙。”
-            “我们总在人群中藏起心事，却忘了每个人手里都握着一段看不见的伤疤。”
-
-“夜晚的沉默不是空洞的，它铺满了无数人未说出口的故事——你并不孤单。”
-
-“眼泪是人类共同的语言，无需翻译也能被理解。” 
+            "  我希望正在读这句话的人永远幸福 ",
+            "忧愁是心上下的一场雨，不必急于放晴，允许自己慢慢穿过这片潮湿。",
+              "心有时候也会感冒，它会打喷嚏、流眼泪——这只是提醒你，它需要休息和治愈。",
+              "不必为自己的敏感道歉。正是那些细微的裂痕，让光有了照进内心的缝隙。",
+            "我们总在人群中藏起心事，却忘了每个人手里都握着一段看不见的伤疤。",
+            "夜晚的沉默不是空洞的，它铺满了无数人未说出口的故事——你并不孤单。",
+            " 眼泪是人类共同的语言，无需翻译也能被理解。" 
 
 
           ];
@@ -395,8 +391,8 @@ app.get("/", (req, res) => {
           // 初始显示
           updateQuote();
 
-          // 每 5 秒切换一次
-          setInterval(updateQuote, 5000);
+          // 每 4 秒切换一次
+          setInterval(updateQuote, 4000);
         });
       </script>
       <script src="script.js"></script>
@@ -419,7 +415,7 @@ function renderForm(type) {
     <style>
       body {
         font-family: Arial, sans-serif;
-        background: url('/uploads/ocean.png') no-repeat center center;
+        background: url('/uploads/write.png') no-repeat center center;
         background-size: cover;
         padding: 20px;
         color: #333;
@@ -429,13 +425,13 @@ function renderForm(type) {
         font-size: 2.5em;
         text-align: center;
         color: white;
-        text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.7);
+        text-shadow: 2px 2px 4px rgba(227, 222, 222, 0.1);
       }
 
       form {
         max-width: 600px;
         margin: auto;
-        background: rgba(255, 255, 255, 0.95);
+        background: rgba(255, 240, 240, 0.1);
         padding: 20px;
         border-radius: 10px;
         box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
@@ -555,13 +551,13 @@ app.get('/diary/:id', async (req, res) => {
       .article {
         max-width: 800px;
         margin: 0 auto;
-        background: rgba(255, 255, 255, 0.6);
+        background: rgba(255, 255, 255, 0.5);
         -webkit-backdrop-filter: blur(20px);
         backdrop-filter: blur(20px);
         border-radius: 20px;
         box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
         padding: 30px;
-        border: 1px solid rgba(255, 255, 255, 0.3);
+        border: 1px solid rgba(255, 255, 255, 0.1);
         transition: all 0.3s ease;
       }
       .article img {
@@ -617,7 +613,7 @@ app.get('/diary-list', async (req, res) => {
       }
 
       .card, .article {
-        background: rgba(255, 255, 255, 0.7) !important;
+        background: rgba(255, 255, 255, 0.1) !important;
         -webkit-backdrop-filter: blur(10px) !important;
         backdrop-filter: blur(10px) !important;
         border-radius: 15px !important;
@@ -629,13 +625,13 @@ app.get('/diary-list', async (req, res) => {
       .card:hover, .article:hover {
         transform: translateY(-5px) !important;
         box-shadow: 0 15px 45px rgba(0, 0, 0, 0.15) !important;
-        background: rgba(255, 255, 255, 0.8) !important;
+        background: rgba(255, 255, 255, 0.1) !important;
       }
 
       .banner {
         width: 100%;
         padding: 60px 0;
-        background: rgba(0, 0, 0, 0.5);
+        background: rgba(0, 0, 0, 0.1);
         backdrop-filter: blur(5px);
         display: flex;
         justify-content: center;
@@ -671,8 +667,8 @@ app.get('/diary-list', async (req, res) => {
       }
 
       .card {
-        background: rgba(255, 255, 255, 0.7);
-        -webkit-backdrop-filter: blur(10px);
+        background: rgba(255, 255, 255, 0.1);
+        -webkit-backdrop-filter: blur(10x);
         backdrop-filter: blur(10px);
         border-radius: 15px;
         border: 1px solid rgba(255, 255, 255, 0.3);
@@ -769,7 +765,7 @@ app.get('/diary-list', async (req, res) => {
       </div>
     </div>
     <p style="text-align: center; margin: 20px;">
-      <a href="/" style="display: inline-block; padding: 10px 25px; background: rgba(255, 255, 255, 0.9); color: #333; text-decoration: none; border-radius: 25px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); transition: all 0.3s ease;">
+      <a href="/" style="display: inline-block; padding: 10px 25px; background: rgba(255, 255, 255, 0.1); color: #333; text-decoration: none; border-radius: 25px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); transition: all 0.3s ease;">
         返回首页
       </a>
     </p>
@@ -1574,6 +1570,114 @@ app.get('/outfit/:id', async (req, res) => {
     await db.run('DELETE FROM outfit WHERE id = ?', [id]);
     res.redirect('/outfit-list');
   });
+
+// 个人简介页面路由
+app.get('/about', (req, res) => {
+  res.send(`
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        background: url('/uploads/night.png') no-repeat center center fixed;
+        background-size: cover;
+        margin: 0;
+        padding: 40px 20px;
+        min-height: 100vh;
+      }
+
+      .profile-container {
+        max-width: 800px;
+        margin: 0 auto;
+        background: rgba(255, 255, 255, 0.4);
+        -webkit-backdrop-filter: blur(12px);
+        backdrop-filter: blur(12px);
+        border-radius: 15px;
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+        padding: 30px;
+        transition: all 0.3s ease;
+      }
+
+      .profile-header {
+        text-align: center;
+        margin-bottom: 30px;
+      }
+
+      .profile-header img {
+        width: 150px;
+        height: 150px;
+        border-radius: 50%;
+        margin-bottom: 20px;
+        border: 3px solid rgba(255, 255, 255, 0.1);
+      }
+
+      .profile-header h1 {
+        color: #333;
+        margin: 0;
+        font-size: 2em;
+      }
+
+      .profile-header p {
+        color: #666;
+        margin: 10px 0;
+      }
+
+      .profile-content {
+        padding: 20px;
+        background: rgba(255, 255, 255, 0.004);
+        -webkit-backdrop-filter: blur(8px);
+        backdrop-filter: blur(8px);
+        border-radius: 10px;
+        margin-top: 20px;
+        border: 1px solid rgba(255, 255, 255, 0.05);
+      }
+
+      .profile-section {
+        margin-bottom: 25px;
+      }
+
+      .profile-section h2 {
+        color: #444;
+        border-bottom: 2px solid rgba(0, 0, 0, 0.1);
+        padding-bottom: 10px;
+        margin-bottom: 15px;
+      }
+
+      .profile-section p {
+        color: #555;
+        line-height: 1.6;
+      }
+    </style>
+
+    <div class="profile-container">
+      <div class="profile-header">
+        <img src="/uploads/touxiang.png" alt="头像">
+        <h1>gyyixingkusa</h1>
+        <p> a Nanjing University Class of 2024 Computer Science and Technology Student</p>
+      </div>
+
+      <div class="profile-content">
+        <div class="profile-section">
+          <h2>about me</h2>
+          <p>hello！我是gyyixingkusa，很高兴认识你。我热爱记录生活中的美好瞬间，无论是美食、穿搭、还是日常感悟。这个网站是我记录生活的小天地，希望能与你分享我的所见所感。</p>
+        </div>
+
+        <div class="profile-section">
+          <h2>兴趣爱好</h2>
+          <p>• food：喜欢尝试各种美食，记录美食制作过程<br>
+             • ootd：热爱时尚，享受搭配不同风格的乐趣<br>
+             • diary：记录生活感悟，分享心情故事<br>
+             • music：沉浸在音乐的海洋里,欢迎大家来听音乐</p>
+        </div>
+
+        <div class="profile-section">
+          <h2>email:geruyue085@gmail.com <br>qq:154938866 <br>wechat:gry1211211234567</h2>
+          <p>欢迎关注我的个人网站，一起交流分享生活的美好！</p>
+        </div>
+      </div>
+    </div>
+    ${musicPlayerHTML}
+  `);
+});
 
 app.listen(port, () => {
   console.log(`服务器已启动，访问地址：http://localhost:${port}`);

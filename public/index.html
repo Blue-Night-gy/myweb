@@ -8,7 +8,8 @@
   <style>
     body {
       font-family: Arial, sans-serif;
-      background: #f4f4f9;
+      background: url('/uploads/beauty.png') no-repeat center center fixed;
+      background-size: cover;
       margin: 0;
       padding: 0;
       display: flex;
@@ -16,7 +17,9 @@
 
     .sidebar {
       width: 200px;
-      background: #007bff;
+      background: rgba(0, 123, 255, 0.8);
+      -webkit-backdrop-filter: blur(10px);
+      backdrop-filter: blur(10px);
       color: white;
       height: 100vh;
       position: fixed;
@@ -25,20 +28,26 @@
       display: flex;
       flex-direction: column;
       padding: 20px 10px;
-      box-shadow: 2px 0 5px rgba(0, 0, 0, 0.1);
+      box-shadow: 2px 0 15px rgba(0, 0, 0, 0.2);
+      border-right: 1px solid rgba(255, 255, 255, 0.1);
     }
 
     .sidebar a {
       color: white;
       text-decoration: none;
       margin: 10px 0;
-      padding: 10px;
-      border-radius: 6px;
-      transition: background 0.3s;
+      padding: 10px 15px;
+      border-radius: 8px;
+      transition: all 0.3s ease;
+      background: rgba(0, 0, 0, 0.2);
+      font-weight: 500;
+      border: 1px solid rgba(255, 255, 255, 0.1);
     }
 
     .sidebar a:hover {
-      background: #0056b3;
+      background: rgba(0, 0, 0, 0.4);
+      transform: translateX(5px);
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
     }
 
     main {
@@ -48,11 +57,20 @@
     }
 
     .content-section {
-      background: white;
-      border-radius: 12px;
+      background: rgba(255, 255, 255, 0.5);
+      -webkit-backdrop-filter: blur(10px);
+      backdrop-filter: blur(10px);
+      border-radius: 15px;
       padding: 20px;
       margin-bottom: 20px;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+      border: 1px solid rgba(255, 255, 255, 0.3);
+      transition: all 0.3s ease;
+    }
+
+    .content-section:hover {
+      background: rgba(255, 255, 255, 0.6);
+      box-shadow: 0 15px 45px rgba(0, 0, 0, 0.15);
     }
 
     .content-section.hidden {
@@ -84,6 +102,26 @@
 
     form button:hover {
       background: #0056b3;
+    }
+
+    /* 主要按钮样式 */
+    .main-button {
+      display: inline-block;
+      padding: 12px 25px;
+      background: rgba(0, 123, 255, 0.9);
+      color: white;
+      text-decoration: none;
+      border-radius: 8px;
+      font-weight: bold;
+      transition: all 0.3s ease;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+    }
+
+    .main-button:hover {
+      background: rgba(0, 123, 255, 1);
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(0, 0, 0, 0.25);
     }
 
     /* 相册样式 */
