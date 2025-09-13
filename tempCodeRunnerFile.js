@@ -62,11 +62,11 @@ const musicPlayerHTML = `
           alert('音乐播放失败，请检查音乐文件路径');
         });
         btn.innerText = '⏸ 暂停音乐';
-        btn.style.background = '#dc3545';
+        btn.style.background = '#f58f99ff';
       } else {
         music.pause();
         btn.innerText = '▶ 播放音乐';
-        btn.style.background = '#007bff';
+        btn.style.background = '#def7abff';
       }
     });
     
@@ -231,7 +231,7 @@ app.get("/", (req, res) => {
           margin-top: 10px;
           padding: 8px 15px;
           border-radius: 8px;
-          background: #007bff;
+          background: #71b0f4ff;
           color: white;
           text-decoration: none;
         }
@@ -260,7 +260,7 @@ app.get("/", (req, res) => {
       <div class="profile">
         <img src="/uploads/touxiang.png" alt="头像">
         <h2>moon</h2>
-        <p>你可以叫我葛什么</p>
+        <p> call me 葛什么</p>
         <p>文章 77 | 分类 1 | 标签 1 | 时间轴 76</p>
         <a href="/about">了解我</a>
       </div>
@@ -438,7 +438,7 @@ app.get("/about", (req, res) => {
       <h2>关于我</h2>
       <p>👋 你好，我是 gyyixingkusa。</p>
       <p>📖 这里我会记录我的日记、美食和笔记。</p>
-      <p>🎵 喜欢音乐、编程和生活分享。</p>
+      <p>🎵 喜欢音乐、编程和生活分享.ootd。</p>
       <p><a href="/">⬅ 返回首页</a></p>
     </div>
   `);

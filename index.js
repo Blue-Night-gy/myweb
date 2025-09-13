@@ -3,6 +3,7 @@ import express from "express";
 import multer from "multer";
 import sqlite3 from "sqlite3";
 import { open } from "sqlite";
+import { marked } from 'marked';
 
 const app = express();
 const port = 3000;
@@ -392,295 +393,1084 @@ app.get("/", (req, res) => {
   `);
 });
 
-// ==================== 日记 ====================
+// ==================== 统一逻辑：diary ====================
+// Shared form renderer to keep all four forms identical (title, content, multi-image upload UI)
+function renderForm(type) {
+  const titleMap = {
+    diary: '记录日记',
+    food: '记录美食',
+    note: '记录笔记',
+    outfit: '记录穿搭'
+  };
 
-app.get("/diary", (req, res) => {
-  res.send(`
-    <h2>写日记</h2>
-    <form action="/diary" method="post" enctype="multipart/form-data">
-      <input type="text" name="title" placeholder="标题" required><br><br>
-      <textarea name="content" placeholder="内容..." required></textarea><br><br>
-      <input type="file" name="photo" accept="image/*"><br><br>
+  return `
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        background: url('/uploads/sun.png') no-repeat center center;
+        background-size: cover;
+        padding: 20px;
+        color: #333;
+      }
+
+      h2 {
+        font-size: 2.5em;
+        text-align: center;
+        color: white;
+        text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.7);
+      }
+
+      form {
+        max-width: 600px;
+        margin: auto;
+        background: rgba(255, 255, 255, 0.95);
+        padding: 20px;
+        border-radius: 10px;
+        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+      }
+
+      input, textarea, button {
+        font-size: 1.2em;
+        margin-bottom: 10px;
+        width: 100%;
+      }
+      
+      .markdown-tip {
+        background: #f8f9fa;
+        padding: 10px;
+        border-radius: 6px;
+        margin: 10px 0;
+        font-size: 0.9em;
+        color: #666;
+      }
+
+      button {
+        background: #007bff;
+        color: white;
+        border: none;
+        padding: 10px 20px;
+        border-radius: 6px;
+        cursor: pointer;
+        transition: background 0.3s;
+      }
+
+      button:hover {
+        background: #0056b3;
+      }
+
+      /* multi image preview area (visual only) */
+      .images-preview {
+        display: flex;
+        gap: 10px;
+        margin-top: 10px;
+        flex-wrap: wrap;
+      }
+
+      .images-preview img {
+        width: 100px;
+        height: 100px;
+        object-fit: cover;
+        border-radius: 6px;
+        box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+      }
+    </style>
+
+    <h2>${titleMap[type] || '记录'}</h2>
+    <form action="/${type}" method="post" enctype="multipart/form-data">
+      <input type="text" name="title" placeholder="标题" required><br>
+      <div class="markdown-tip">
+        支持 Markdown 格式:
+        <ul>
+          <li>**粗体** 或 __粗体__</li>
+          <li>*斜体* 或 _斜体_</li>
+          <li># 一级标题</li>
+          <li>## 二级标题</li>
+          <li>- 无序列表</li>
+          <li>1. 有序列表</li>
+          <li>[链接文字](URL)</li>
+          <li>![图片描述](图片URL)</li>
+        </ul>
+      </div>
+      <textarea name="content" placeholder="支持 Markdown 格式..." required style="min-height: 200px;"></textarea><br>
+      <!-- show multi image input UI; server still handles single file to preserve existing behavior -->
+      <input type="file" name="photo" accept="image/*" multiple id="photo-input"><br>
+      <div class="images-preview" id="images-preview"></div>
       <button type="submit">发布</button>
     </form>
-    <p><a href="/">返回首页</a></p>
+    <p style="text-align: center; margin-top: 20px;"><a href="/">返回首页</a></p>
+
+    <script>
+      // preview selected images (client-side only)
+      document.addEventListener('DOMContentLoaded', () => {
+        const input = document.getElementById('photo-input');
+        const preview = document.getElementById('images-preview');
+        if (!input) return;
+        input.addEventListener('change', () => {
+          preview.innerHTML = '';
+          Array.from(input.files).slice(0,6).forEach(file => {
+            const url = URL.createObjectURL(file);
+            const img = document.createElement('img');
+            img.src = url;
+            preview.appendChild(img);
+          });
+        });
+      });
+    </script>
+  `;
+}
+
+app.get('/diary', (req, res) => {
+  res.send(renderForm('diary'));
+});
+
+// 添加单篇日记查看页面
+app.get('/diary/:id', async (req, res) => {
+  const diary = await db.get('SELECT * FROM diary WHERE id = ?', req.params.id);
+  if (!diary) {
+    return res.status(404).send('日记不存在');
+  }
+  
+  res.send(`
+    <style>
+      .article {
+        max-width: 800px;
+        margin: 40px auto;
+        padding: 20px;
+        background: white;
+        border-radius: 12px;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+      }
+      .article img {
+        max-width: 100%;
+        border-radius: 8px;
+        margin: 20px 0;
+      }
+      .article-content {
+        line-height: 1.8;
+        color: #333;
+      }
+      .back-link {
+        display: inline-block;
+        margin-bottom: 20px;
+        color: #007bff;
+        text-decoration: none;
+      }
+      .back-link:hover {
+        text-decoration: underline;
+      }
+      .article-meta {
+        color: #666;
+        font-size: 0.9em;
+        margin-bottom: 20px;
+      }
+    </style>
+    <div class="article">
+      <a href="/diary-list" class="back-link">← 返回日记列表</a>
+      <h1>${diary.title}</h1>
+      <div class="article-meta">
+        发布于: ${new Date(diary.created_at).toLocaleString()}
+      </div>
+      ${diary.photo ? `<img src="/${diary.photo}" alt="${diary.title}">` : ''}
+      <div class="article-content">
+        ${marked(diary.content)}
+      </div>
+    </div>
+    ${musicPlayerHTML}
   `);
 });
 
-app.post("/diary", upload.single("photo"), async (req, res) => {
-  const { title, content } = req.body;
-  const photoPath = req.file ? "/uploads/" + req.file.filename : null;
-
-  await db.run("INSERT INTO diary (title, content, photo) VALUES (?, ?, ?)", [
-    title,
-    content,
-    photoPath
-  ]);
-
-  res.redirect("/diary-list");
-});
-
-app.get("/diary-list", async (req, res) => {
-  const rows = await db.all("SELECT * FROM diary ORDER BY created_at DESC");
-
-  let html = "<h2>我的日记</h2>";
-  rows.forEach(r => {
-    html += `
-      <div style="border:1px solid #ccc; margin:10px; padding:10px;">
-        <h3>${r.title}</h3>
-        <p>${r.content}</p>
-        ${r.photo ? `<img src="${r.photo}" style="max-width:200px;">` : ""}
-        <p><small>${r.created_at}</small></p>
-      </div>
-    `;
-  });
-
-  html += `<p><a href="/">返回首页</a></p>`;
-
-  // 在页面底部加入音乐播放器
-  html += musicPlayerHTML;
-
-  res.send(html);
-});
-
-// ==================== 美食 ====================
-app.get("/food", (req, res) => {
-  res.send(`
-    <h2>记录美食</h2>
-    <form action="/food" method="post" enctype="multipart/form-data">
-      <input type="text" name="title" placeholder="美食名称" required><br><br>
-      <textarea name="content" placeholder="描述..." required></textarea><br><br>
-      <input type="file" name="photo" accept="image/*"><br><br>
-      <button type="submit">发布</button>
-    </form>
-    <p><a href="/">返回首页</a></p>
-  `);
-});
-
-app.post("/food", upload.single("photo"), async (req, res) => {
-  const { title, content } = req.body;
-  const photoPath = req.file ? "/uploads/" + req.file.filename : null;
-
-  await db.run("INSERT INTO food (title, content, photo) VALUES (?, ?, ?)", [
-    title,
-    content,
-    photoPath
-  ]);
-
-  res.redirect("/food-list");
-});
-
-app.get("/food-list", async (req, res) => {
-  const rows = await db.all("SELECT * FROM food ORDER BY created_at DESC");
-
-  let html = "<h2>我的美食</h2>";
-  rows.forEach(r => {
-    html += `
-      <div style="border:1px solid #ccc; margin:10px; padding:10px;">
-        <h3>${r.title}</h3>
-        <p>${r.content}</p>
-        ${r.photo ? `<img src="${r.photo}" style="max-width:200px;">` : ""}
-        <p><small>${r.created_at}</small></p>
-      </div>
-    `;
-  });
-  html += `<p><a href="/">返回首页</a></p>`;
-  // 在页面底部加入音乐播放器
-  html += musicPlayerHTML;
-  res.send(html);
-});
-
-// ==================== 笔记 ====================
-app.get("/note", (req, res) => {
-  res.send(`
-    <h2>写笔记</h2>
-    <form action="/note" method="post" enctype="multipart/form-data">
-      <input type="text" name="title" placeholder="标题" required><br><br>
-      <textarea name="content" placeholder="内容..." required></textarea><br><br>
-      <input type="file" name="photo" accept="image/*"><br><br>
-      <button type="submit">发布</button>
-    </form>
-    <p><a href="/">返回首页</a></p>
-  `);
-});
-
-app.post("/note", upload.single("photo"), async (req, res) => {
-  const { title, content } = req.body;
-  const photoPath = req.file ? "/uploads/" + req.file.filename : null;
-
-  await db.run("INSERT INTO note (title, content, photo) VALUES (?, ?, ?)", [
-    title,
-    content,
-    photoPath
-  ]);
-
-  res.redirect("/note-list");
-});
-
-app.get("/note-list", async (req, res) => {
-  const rows = await db.all("SELECT * FROM note ORDER BY created_at DESC");
-
-  let html = "<h2>我的笔记</h2>";
-  rows.forEach(r => {
-    html += `
-      <div style="border:1px solid #ccc; margin:10px; padding:10px;">
-        <h3>${r.title}</h3>
-        <p>${r.content}</p>
-        ${r.photo ? `<img src="${r.photo}" style="max-width:200px;">` : ""}
-        <p><small>${r.created_at}</small></p>
-      </div>
-    `;
-  });
-  html += `<p><a href="/">返回首页</a></p>`;
-  // 在页面底部加入音乐播放器
-  html += musicPlayerHTML;
-  res.send(html);
-});
-//--------------------------- 关于我 ---------------------------
-app.get("/about", (req, res) => {
+app.get('/diary-list', async (req, res) => {
+  const diaries = await db.all('SELECT * FROM diary ORDER BY created_at DESC');
   res.send(`
     <style>
       body {
         font-family: Arial, sans-serif;
-        padding: 20px;
         background: #f4f4f9;
+        margin: 0;
+        padding: 0;
       }
-      .about {
-        max-width: 600px;
-        margin: auto;
-        background: white;
-        border-radius: 16px;
+
+      .banner {
+        width: 100%;
+        height: 200px;
+        background: url('/uploads/banner.jpg') no-repeat center center;
+        background-size: cover;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        color: white;
+        font-size: 2.5em;
+        font-weight: bold;
+        text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.7);
+      }
+
+      .timeline {
+        position: relative;
         padding: 20px;
-        box-shadow: 0 4px 15px rgba(0,0,0,0.2);
       }
-      h2 { margin-top: 0; }
+
+      .timeline::before {
+        content: '';
+        position: absolute;
+        left: 60px;
+        top: 0;
+        bottom: 0;
+        width: 4px;
+        background: #f8c8dc;
+      }
+
+      .card-container {
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
+        padding: 20px;
+        margin-left: 100px;
+      }
+
+      .card {
+        background: white;
+        border-radius: 10px;
+        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+        padding: 20px;
+        width: 100%;
+        max-width: 800px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        text-align: left;
+        position: relative;
+      }
+
+      .card::before {
+        content: '';
+        position: absolute;
+        top: 10px;
+        left: 50px;
+        width: 20px;
+        height: 20px;
+        background: #f8c8dc;
+        border-radius: 50%;
+      }
+
+      .card-time {
+        position: absolute;
+        top: 10px;
+        left: 80px;
+        font-size: 0.9em;
+        color: #555;
+      }
+
+      .card img {
+        width: 150px;
+        height: 150px;
+        border-radius: 10px;
+        object-fit: cover;
+      }
+
+      .card-content {
+        flex: 1;
+        margin-right: 20px;
+      }
+
+      .card-content h3 {
+        margin: 10px 0;
+        font-size: 1.5em;
+      }
+
+      .card-content p {
+        font-size: 1em;
+        color: #555;
+      }
+
+      .card-content a {
+        display: inline-block;
+        margin-top: 10px;
+        padding: 10px 20px;
+        border-radius: 6px;
+        background: #007bff;
+        color: white;
+        text-decoration: none;
+      }
+
+      .card-content a:hover {
+        background: #0056b3;
+      }
     </style>
 
-    <div class="about">
-      <h2>关于我</h2>
-      <p>👋 你好，我是 gyyixingkusa。</p>
-      <p>📖 这里我会记录我的日记、美食和笔记。</p>
-      <p>🎵 喜欢音乐、编程和生活分享。</p>
-      <p><a href="/">⬅ 返回首页</a></p>
+    <div class="banner">日记列表</div>
+
+    <div class="timeline">
+      <div class="card-container">
+        ${diaries.map(diary => `
+          <div class="card">
+            <span class="card-time">${new Date(diary.created_at).toLocaleDateString()}</span>
+            <div class="card-content">
+              <h3>${diary.title}</h3>
+              <div style="max-height: 100px; overflow: hidden;">
+                ${marked(diary.content.substring(0, 200))}...
+              </div>
+              <a href="/diary/${diary.id}">查看详情</a>
+              <form method="post" action="/diary/${diary.id}/delete" onsubmit="return confirm('确定要删除这篇日记吗？');" style="display:inline-block; margin-left:8px;">
+                <button type="submit" style="background:#dc3545; border:none; color:white; padding:6px 10px; border-radius:6px; cursor:pointer;">删除</button>
+              </form>
+            </div>
+            ${diary.photo ? `<img src="${diary.photo}" alt="Diary Photo">` : ''}
+          </div>
+        `).join('')}
+      </div>
+    </div>
+    <p style="text-align: center; margin: 20px;"><a href="/">返回首页</a></p>
+  `);
+});
+
+// ==================== 统一逻辑：food ====================
+app.get('/food', (req, res) => {
+  res.send(renderForm('food'));
+});
+
+app.get('/food-list', async (req, res) => {
+  const foods = await db.all('SELECT * FROM food ORDER BY created_at DESC');
+  res.send(`
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        background: url('/uploads/sun.png') no-repeat center center fixed;
+        background-size: cover;
+        margin: 0;
+        padding: 0;
+      }
+
+      .banner {
+        width: 100%;
+        padding: 60px 0;
+        background: rgba(0, 0, 0, 0.5);
+        backdrop-filter: blur(5px);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        color: white;
+        font-size: 2.5em;
+        font-weight: bold;
+        text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.7);
+        margin-bottom: 30px;
+      }
+
+      .timeline {
+        position: relative;
+        padding: 20px;
+      }
+
+      .timeline::before {
+        content: '';
+        position: absolute;
+        left: 60px;
+        top: 0;
+        bottom: 0;
+        width: 4px;
+        background: #f8c8dc;
+      }
+
+      .card-container {
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
+        padding: 20px;
+        margin-left: 100px;
+      }
+
+      .card {
+        background: white;
+        border-radius: 10px;
+        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+        padding: 20px;
+        width: 100%;
+        max-width: 800px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        text-align: left;
+        position: relative;
+      }
+
+      .card::before {
+        content: '';
+        position: absolute;
+        top: 10px;
+        left: 50px;
+        width: 20px;
+        height: 20px;
+        background: #f8c8dc;
+        border-radius: 50%;
+      }
+
+      .card-time {
+        position: absolute;
+        top: 10px;
+        left: 80px;
+        font-size: 0.9em;
+        color: #555;
+      }
+
+      .card img {
+        width: 150px;
+        height: 150px;
+        border-radius: 10px;
+        object-fit: cover;
+      }
+
+      .card-content {
+        flex: 1;
+        margin-right: 20px;
+      }
+
+      .card-content h3 {
+        margin: 10px 0;
+        font-size: 1.5em;
+      }
+
+      .card-content p {
+        font-size: 1em;
+        color: #555;
+      }
+
+      .card-content a {
+        display: inline-block;
+        margin-top: 10px;
+        padding: 10px 20px;
+        border-radius: 6px;
+        background: #007bff;
+        color: white;
+        text-decoration: none;
+      }
+
+      .card-content a:hover {
+        background: #0056b3;
+      }
+    </style>
+
+    <div class="banner">美食列表</div>
+
+    <div class="timeline">
+      <div class="card-container">
+        ${foods.map(food => `
+          <div class="card">
+            <span class="card-time">${new Date(food.created_at).toLocaleString()}</span>
+            <div class="card-content">
+              <h3>${food.title}</h3>
+              <div style="max-height: 100px; overflow: hidden;">
+                ${marked(food.content.substring(0, 200))}...
+              </div>
+              <div class="card-buttons">
+                <a href="/food/${food.id}">查看详情</a>
+                <form method="post" action="/food/${food.id}/delete" onsubmit="return confirm('确定要删除这条美食记录吗？');" style="display:inline;">
+                  <button type="submit">删除</button>
+                </form>
+              </div>
+            </div>
+            ${food.photo ? `<img src="${food.photo}" alt="Food Photo">` : ''}
+          </div>
+        `).join('')}
+      </div>
+    </div>
+    <p style="text-align: center; margin: 20px;">
+      <a href="/" style="display: inline-block; padding: 10px 25px; background: rgba(255, 255, 255, 0.9); color: #333; text-decoration: none; border-radius: 25px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); transition: all 0.3s ease;">
+        返回首页
+      </a>
+    </p>
+    ${musicPlayerHTML}
+  `);
+});
+
+// ==================== 统一逻辑：note ====================
+app.get('/note', (req, res) => {
+  res.send(renderForm('note'));
+});
+
+app.get('/note-list', async (req, res) => {
+  const notes = await db.all('SELECT * FROM note ORDER BY created_at DESC');
+  res.send(`
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        background: url('/uploads/sun.png') no-repeat center center fixed;
+        background-size: cover;
+        margin: 0;
+        padding: 0;
+      }
+
+      .banner {
+        width: 100%;
+        padding: 60px 0;
+        background: rgba(0, 0, 0, 0.5);
+        backdrop-filter: blur(5px);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        color: white;
+        font-size: 2.5em;
+        font-weight: bold;
+        text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.7);
+        margin-bottom: 30px;
+      }
+
+      .timeline {
+        position: relative;
+        padding: 20px;
+      }
+
+      .timeline::before {
+        content: '';
+        position: absolute;
+        left: 60px;
+        top: 0;
+        bottom: 0;
+        width: 4px;
+        background: #f8c8dc;
+      }
+
+      .card-container {
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
+        padding: 20px;
+        margin-left: 100px;
+      }
+
+      .card {
+        background: white;
+        border-radius: 10px;
+        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+        padding: 20px;
+        width: 100%;
+        max-width: 800px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        text-align: left;
+        position: relative;
+      }
+
+      .card::before {
+        content: '';
+        position: absolute;
+        top: 10px;
+        left: 50px;
+        width: 20px;
+        height: 20px;
+        background: #f8c8dc;
+        border-radius: 50%;
+      }
+
+      .card-time {
+        position: absolute;
+        top: 10px;
+        left: 80px;
+        font-size: 0.9em;
+        color: #555;
+      }
+
+      .card img {
+        width: 150px;
+        height: 150px;
+        border-radius: 10px;
+        object-fit: cover;
+      }
+
+      .card-content {
+        flex: 1;
+        margin-right: 20px;
+      }
+
+      .card-content h3 {
+        margin: 10px 0;
+        font-size: 1.5em;
+      }
+
+      .card-content p {
+        font-size: 1em;
+        color: #555;
+      }
+
+      .card-content a {
+        display: inline-block;
+        margin-top: 10px;
+        padding: 10px 20px;
+        border-radius: 6px;
+        background: #007bff;
+        color: white;
+        text-decoration: none;
+      }
+
+      .card-content a:hover {
+        background: #0056b3;
+      }
+    </style>
+
+    <div class="banner">笔记列表</div>
+
+    <div class="timeline">
+      <div class="card-container">
+        ${notes.map(note => `
+          <div class="card">
+            <span class="card-time">${new Date(note.created_at).toLocaleString()}</span>
+            <div class="card-content">
+              <h3>${note.title}</h3>
+              <div style="max-height: 100px; overflow: hidden;">
+                ${marked(note.content.substring(0, 200))}...
+              </div>
+              <div class="card-buttons">
+                <a href="/note/${note.id}">查看详情</a>
+                <form method="post" action="/note/${note.id}/delete" onsubmit="return confirm('确定要删除这条笔记吗？');" style="display:inline;">
+                  <button type="submit">删除</button>
+                </form>
+              </div>
+            </div>
+            ${note.photo ? `<img src="${note.photo}" alt="Note Photo">` : ''}
+          </div>
+        `).join('')}
+      </div>
+    </div>
+    <p style="text-align: center; margin: 20px;">
+      <a href="/" style="display: inline-block; padding: 10px 25px; background: rgba(255, 255, 255, 0.9); color: #333; text-decoration: none; border-radius: 25px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); transition: all 0.3s ease;">
+        返回首页
+      </a>
+    </p>
+    ${musicPlayerHTML}
+  `);
+});
+
+// ==================== 统一逻辑：outfit ====================
+app.get('/outfit', (req, res) => {
+  res.send(renderForm('outfit'));
+});
+
+app.get('/outfit-list', async (req, res) => {
+  const outfits = await db.all('SELECT * FROM outfit ORDER BY created_at DESC');
+  res.send(`
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        background: url('/uploads/sun.png') no-repeat center center fixed;
+        background-size: cover;
+        margin: 0;
+        padding: 0;
+      }
+
+      .banner {
+        width: 100%;
+        padding: 60px 0;
+        background: rgba(0, 0, 0, 0.5);
+        backdrop-filter: blur(5px);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        color: white;
+        font-size: 2.5em;
+        font-weight: bold;
+        text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.7);
+        margin-bottom: 30px;
+      }
+
+      .timeline {
+        position: relative;
+        padding: 20px;
+      }
+
+      .timeline::before {
+        content: '';
+        position: absolute;
+        left: 60px;
+        top: 0;
+        bottom: 0;
+        width: 4px;
+        background: #f8c8dc;
+      }
+
+      .card-container {
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
+        padding: 20px;
+        margin-left: 100px;
+      }
+
+      .card {
+        background: white;
+        border-radius: 10px;
+        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+        padding: 20px;
+        width: 100%;
+        max-width: 800px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        text-align: left;
+        position: relative;
+      }
+
+      .card::before {
+        content: '';
+        position: absolute;
+        top: 10px;
+        left: 50px;
+        width: 20px;
+        height: 20px;
+        background: #f8c8dc;
+        border-radius: 50%;
+      }
+
+      .card-time {
+        position: absolute;
+        top: 10px;
+        left: 80px;
+        font-size: 0.9em;
+        color: #555;
+      }
+
+      .card img {
+        width: 150px;
+        height: 150px;
+        border-radius: 10px;
+        object-fit: cover;
+      }
+
+      .card-content {
+        flex: 1;
+        margin-right: 20px;
+      }
+
+      .card-content h3 {
+        margin: 10px 0;
+        font-size: 1.5em;
+      }
+
+      .card-content p {
+        font-size: 1em;
+        color: #555;
+      }
+
+      .card-content a {
+        display: inline-block;
+        margin-top: 10px;
+        padding: 10px 20px;
+        border-radius: 6px;
+        background: #007bff;
+        color: white;
+        text-decoration: none;
+      }
+
+      .card-content a:hover {
+        background: #0056b3;
+      }
+    </style>
+
+    <div class="banner">穿搭列表</div>
+
+    <div class="timeline">
+      <div class="card-container">
+        ${outfits.map(outfit => `
+          <div class="card">
+            <span class="card-time">${new Date(outfit.created_at).toLocaleString()}</span>
+            <div class="card-content">
+              <h3>${outfit.title}</h3>
+              <div style="max-height: 100px; overflow: hidden;">
+                ${marked(outfit.content.substring(0, 200))}...
+              </div>
+              <div class="card-buttons">
+                <a href="/outfit/${outfit.id}">查看详情</a>
+                <form method="post" action="/outfit/${outfit.id}/delete" onsubmit="return confirm('确定要删除这条穿搭吗？');" style="display:inline;">
+                  <button type="submit">删除</button>
+                </form>
+              </div>
+            </div>
+            ${outfit.photo ? `<img src="${outfit.photo}" alt="Outfit Photo">` : ''}
+          </div>
+        `).join('')}
+      </div>
+    </div>
+    <p style="text-align: center; margin: 20px;">
+      <a href="/" style="display: inline-block; padding: 10px 25px; background: rgba(255, 255, 255, 0.9); color: #333; text-decoration: none; border-radius: 25px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); transition: all 0.3s ease;">
+        返回首页
+      </a>
+    </p>
+    ${musicPlayerHTML}
+  `);
+});
+
+// Add GET route for individual diary entries
+app.get('/diary/:id', async (req, res) => {
+  const { id } = req.params;
+  const diary = await db.get('SELECT * FROM diary WHERE id = ?', [id]);
+
+  if (!diary) {
+    return res.status(404).send('Diary entry not found');
+  }
+
+  res.send(`
+    <style>
+      body { font-family: Arial, sans-serif; background: #f4f4f9; padding: 20px; }
+
+      .entry {
+        max-width: 900px;
+        margin: 20px auto;
+        background: white;
+        border-radius: 10px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.12);
+        padding: 20px;
+        display: flex;
+        gap: 20px;
+        align-items: flex-start;
+      }
+
+      .entry .content { flex: 1; }
+
+      .entry h2 { margin: 0 0 10px 0; font-size: 1.6em; }
+      .entry p { color: #444; line-height: 1.6; }
+
+      .entry .meta { color: #777; font-size: 0.9em; margin-top: 12px; }
+
+      .entry .thumb {
+        width: 150px;
+        flex: 0 0 150px;
+      }
+
+      .entry .thumb img {
+        width: 150px;
+        height: 150px;
+        object-fit: cover;
+        border-radius: 8px;
+        display: block;
+      }
+
+      .back-btn {
+        display: inline-block;
+        margin-top: 12px;
+        padding: 8px 14px;
+        background: #007bff;
+        color: #fff;
+        border-radius: 6px;
+        text-decoration: none;
+      }
+
+      @media (max-width: 640px) {
+        .entry { flex-direction: column; }
+        .entry .thumb { width: 100%; flex: none; }
+        .entry .thumb img { width: 100%; height: auto; }
+      }
+    </style>
+
+    <div class="entry">
+      <div class="content">
+        <h2>${diary.title}</h2>
+        <p>${diary.content}</p>
+        <div class="meta">${new Date(diary.created_at).toLocaleDateString()}</div>
+        <a class="back-btn" href="/diary-list">返回日记列表</a>
+      </div>
+      ${diary.photo ? '<div class="thumb"><img src="' + diary.photo + '" alt="Diary Photo"></div>' : ''}
     </div>
   `);
 });
 
-// ==================== 日记、笔记、美食、穿搭的统一逻辑 ====================
-const sections = ["diary", "note", "food", "outfit"];
+// Add similar GET routes for note, food, and outfit entries
+app.get('/note/:id', async (req, res) => {
+  const { id } = req.params;
+  const note = await db.get('SELECT * FROM note WHERE id = ?', [id]);
 
-sections.forEach(section => {
-  app.get(`/${section}`, (req, res) => {
-    res.send(`
-      <style>
-        body {
-          font-family: Arial, sans-serif;
-          background: url('/uploads/sun.png') no-repeat center center;
-          background-size: cover;
-          padding: 20px;
-          color: #333;
-        }
-
-        h2 {
-          font-size: 2.5em;
-          text-align: center;
-          color: white;
-          text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.7);
-        }
-
-        form {
-          max-width: 600px;
-          margin: auto;
-          background: rgba(255, 255, 255, 0.9);
-          padding: 20px;
-          border-radius: 10px;
-          box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
-        }
-
-        input, textarea, button {
-          font-size: 1.2em;
-          margin-bottom: 10px;
-        }
-
-        button {
-          background: #007bff;
-          color: white;
-          border: none;
-          padding: 10px 20px;
-          border-radius: 6px;
-          cursor: pointer;
-          transition: background 0.3s;
-        }
-
-        button:hover {
-          background: #0056b3;
-        }
-      </style>
-
-      <h2>记录${section}</h2>
-      <form action="/${section}" method="post" enctype="multipart/form-data">
-        <input type="text" name="title" placeholder="标题" required><br><br>
-        <textarea name="content" placeholder="内容..." required></textarea><br><br>
-        <input type="file" name="photo" accept="image/*"><br><br>
-        <button type="submit">发布</button>
-      </form>
-      <p style="text-align: center; margin-top: 20px;"><a href="/">返回首页</a></p>
-    `);
-  });
-
-  app.post(`/${section}`, upload.single("photo"), async (req, res) => {
-    const { title, content } = req.body;
-    const photoPath = req.file ? "/uploads/" + req.file.filename : null;
-
-    await db.run(
-      `INSERT INTO ${section} (title, content, photo) VALUES (?, ?, ?)`,
-      [title, content, photoPath]
-    );
-
-    res.redirect(`/${section}-list`);
-  });
-
-  app.get(`/${section}-list`, async (req, res) => {
-    const rows = await db.all(
-      `SELECT * FROM ${section} ORDER BY created_at DESC`
-    );
-
-    let html = `<h2>我的${section}</h2>`;
-    rows.forEach(r => {
-      html += `
-        <div style="border:1px solid #ccc; margin:10px; padding:10px;">
-          <h3>${r.title}</h3>
-          <p>${r.content}</p>
-          ${r.photo ? `<img src="${r.photo}" style="max-width:200px;">` : ""}
-          <p><small>${r.created_at}</small></p>
-        </div>
-      `;
-    });
-    html += `<p><a href="/">返回首页</a></p>`;
-    res.send(html);
-  });
-});
-
-// ==================== 动态统计数量 ====================
-app.get('/stats', async (req, res) => {
-  try {
-    const articles = await db.get('SELECT COUNT(*) AS count FROM diary');
-    const categories = 1; // 示例值，可根据实际需求动态计算
-    const tags = 1; // 示例值，可根据实际需求动态计算
-    const timeline = await db.get('SELECT COUNT(*) AS count FROM diary');
-
-    res.json({
-      articles: articles.count,
-      categories,
-      tags,
-      timeline: timeline.count
-    });
-  } catch (error) {
-    console.error('获取统计数据失败:', error);
-    res.status(500).json({ error: '获取统计数据失败' });
+  if (!note) {
+    return res.status(404).send('Note entry not found');
   }
+
+  res.send(`
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        background: url('/uploads/sun.png') no-repeat center center fixed;
+        background-size: cover;
+        margin: 0;
+        padding: 40px 20px;
+        min-height: 100vh;
+      }
+      .article {
+        max-width: 800px;
+        margin: 0 auto;
+        background: rgba(255, 255, 255, 0.95);
+        backdrop-filter: blur(10px);
+        border-radius: 20px;
+        box-shadow: 0 4px 25px rgba(0, 0, 0, 0.15);
+        padding: 30px;
+        border: 1px solid rgba(255, 255, 255, 0.2);
+      }
+    </style>
+
+    <div class="article">
+      <a href="/note-list" style="display: inline-block; margin-bottom: 20px; color: #007bff; text-decoration: none;">← 返回笔记列表</a>
+      <h1 style="margin: 0 0 10px 0; font-size: 2em; color: #2c3e50;">${note.title}</h1>
+      <div style="color: #666; font-size: 0.9em; margin-bottom: 20px;">
+        发布于: ${new Date(note.created_at).toLocaleString()}
+      </div>
+      ${note.photo ? `<img src="/${note.photo}" alt="${note.title}" style="max-width: 100%; border-radius: 12px; margin: 20px 0; box-shadow: 0 4px 12px rgba(0,0,0,0.1);">` : ''}
+      <div style="line-height: 1.8; color: #333;">
+        ${marked(note.content)}
+      </div>
+    </div>
+    ${musicPlayerHTML}
+  `);
 });
+
+app.get('/food/:id', async (req, res) => {
+  const { id } = req.params;
+  const food = await db.get('SELECT * FROM food WHERE id = ?', [id]);
+
+  if (!food) {
+    return res.status(404).send('美食记录不存在');
+  }
+
+  res.send(`
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        background: url('/uploads/sun.png') no-repeat center center fixed;
+        background-size: cover;
+        margin: 0;
+        padding: 40px 20px;
+        min-height: 100vh;
+      }
+      .article {
+        max-width: 800px;
+        margin: 0 auto;
+        background: rgba(255, 255, 255, 0.95);
+        backdrop-filter: blur(10px);
+        border-radius: 20px;
+        box-shadow: 0 4px 25px rgba(0, 0, 0, 0.15);
+        padding: 30px;
+        border: 1px solid rgba(255, 255, 255, 0.2);
+      }
+      .entry p { color:#444; line-height:1.6; }
+      .entry .meta { color:#777; font-size:0.9em; margin-top:12px; }
+      .entry .thumb { width:150px; flex:0 0 150px; }
+      .entry .thumb img { width:150px; height:150px; object-fit:cover; border-radius:8px; display:block; }
+      .back-btn { display:inline-block; margin-top:12px; padding:8px 14px; background:#007bff; color:#fff; border-radius:6px; text-decoration:none; }
+      @media (max-width:640px){ .entry{flex-direction:column;} .entry .thumb{width:100%;flex:none;} .entry .thumb img{width:100%;height:auto;} }
+    </style>
+
+    <div class="article">
+      <a href="/food-list" style="display: inline-block; margin-bottom: 20px; color: #007bff; text-decoration: none;">← 返回美食列表</a>
+      <h1 style="margin: 0 0 10px 0; font-size: 2em; color: #2c3e50;">${food.title}</h1>
+      <div style="color: #666; font-size: 0.9em; margin-bottom: 20px;">
+        发布于: ${new Date(food.created_at).toLocaleString()}
+      </div>
+      ${food.photo ? `<img src="/${food.photo}" alt="${food.title}" style="max-width: 100%; border-radius: 12px; margin: 20px 0; box-shadow: 0 4px 12px rgba(0,0,0,0.1);">` : ''}
+      <div style="line-height: 1.8; color: #333;">
+        ${marked(food.content)}
+      </div>
+    </div>
+    ${musicPlayerHTML}
+  `);
+});
+
+app.get('/outfit/:id', async (req, res) => {
+  const { id } = req.params;
+  const outfit = await db.get('SELECT * FROM outfit WHERE id = ?', [id]);
+
+  if (!outfit) {
+    return res.status(404).send('Outfit entry not found');
+  }
+
+  res.send(`
+    <style>
+      body {
+        font-family: Arial, sans-serif;
+        background: url('/uploads/sun.png') no-repeat center center fixed;
+        background-size: cover;
+        margin: 0;
+        padding: 40px 20px;
+        min-height: 100vh;
+      }
+      .article {
+        max-width: 800px;
+        margin: 0 auto;
+        background: rgba(255, 255, 255, 0.95);
+        backdrop-filter: blur(10px);
+        border-radius: 20px;
+        box-shadow: 0 4px 25px rgba(0, 0, 0, 0.15);
+        padding: 30px;
+        border: 1px solid rgba(255, 255, 255, 0.2);
+      }
+    </style>
+
+    <div class="article">
+      <a href="/outfit-list" style="display: inline-block; margin-bottom: 20px; color: #007bff; text-decoration: none;">← 返回穿搭列表</a>
+      <h1 style="margin: 0 0 10px 0; font-size: 2em; color: #2c3e50;">${outfit.title}</h1>
+      <div style="color: #666; font-size: 0.9em; margin-bottom: 20px;">
+        发布于: ${new Date(outfit.created_at).toLocaleString()}
+      </div>
+      ${outfit.photo ? `<img src="/${outfit.photo}" alt="${outfit.title}" style="max-width: 100%; border-radius: 12px; margin: 20px 0; box-shadow: 0 4px 12px rgba(0,0,0,0.1);">` : ''}
+      <div style="line-height: 1.8; color: #333;">
+        ${marked(outfit.content)}
+      </div>
+    </div>
+    ${musicPlayerHTML}
+    </div>
+  `);
+});
+
+  // ==================== POST handlers统一：diary/food/note/outfit ====================
+  app.post('/diary', upload.single('photo'), async (req, res) => {
+    const { title, content } = req.body;
+    const photoPath = req.file ? '/uploads/' + req.file.filename : null;
+    await db.run('INSERT INTO diary (title, content, photo) VALUES (?, ?, ?)', [title, content, photoPath]);
+    res.redirect('/diary-list');
+  });
+
+  // delete diary
+  app.post('/diary/:id/delete', async (req, res) => {
+    const { id } = req.params;
+    await db.run('DELETE FROM diary WHERE id = ?', [id]);
+    res.redirect('/diary-list');
+  });
+
+  app.post('/food', upload.single('photo'), async (req, res) => {
+    const { title, content } = req.body;
+    const photoPath = req.file ? '/uploads/' + req.file.filename : null;
+    await db.run('INSERT INTO food (title, content, photo) VALUES (?, ?, ?)', [title, content, photoPath]);
+    res.redirect('/food-list');
+  });
+
+  // delete food
+  app.post('/food/:id/delete', async (req, res) => {
+    const { id } = req.params;
+    await db.run('DELETE FROM food WHERE id = ?', [id]);
+    res.redirect('/food-list');
+  });
+
+  app.post('/note', upload.single('photo'), async (req, res) => {
+    const { title, content } = req.body;
+    const photoPath = req.file ? '/uploads/' + req.file.filename : null;
+    await db.run('INSERT INTO note (title, content, photo) VALUES (?, ?, ?)', [title, content, photoPath]);
+    res.redirect('/note-list');
+  });
+
+  // delete note
+  app.post('/note/:id/delete', async (req, res) => {
+    const { id } = req.params;
+    await db.run('DELETE FROM note WHERE id = ?', [id]);
+    res.redirect('/note-list');
+  });
+
+  app.post('/outfit', upload.single('photo'), async (req, res) => {
+    const { title, content } = req.body;
+    const photoPath = req.file ? '/uploads/' + req.file.filename : null;
+    await db.run('INSERT INTO outfit (title, content, photo) VALUES (?, ?, ?)', [title, content, photoPath]);
+    res.redirect('/outfit-list');
+  });
+
+  // delete outfit
+  app.post('/outfit/:id/delete', async (req, res) => {
+    const { id } = req.params;
+    await db.run('DELETE FROM outfit WHERE id = ?', [id]);
+    res.redirect('/outfit-list');
+  });
 
 app.listen(port, () => {
-  console.log(`Server is running at http://localhost:${port}`);
+  console.log(`服务器已启动，访问地址：http://localhost:${port}`);
 });
