@@ -61,4 +61,9 @@ app.get("/diary-list", async (req, res) => {
   res.send(html);
 });
 
-app.listen(3000, () => console.log("✅ 服务器运行在 http://localhost:3000"));
+// 默认是 const port = 3000;
+const port = process.env.PORT || 3000;
+app.listen(port, () => {
+  console.log(`Server running on port ${port}`);
+});
+
