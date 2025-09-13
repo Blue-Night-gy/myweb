@@ -15,7 +15,9 @@ const upload = multer({ dest: "uploads/" });
 
 // 静态文件：允许访问上传的图片
 app.use("/uploads", express.static("uploads"));
- 
+
+// 配置静态文件路径，允许访问 music 目录中的音乐文件
+app.use("/music", express.static("music"));
 
 // 公共音乐播放器 HTML
 // 修复后的音乐播放器 HTML
@@ -25,18 +27,35 @@ const musicPlayerHTML = `
   bottom: 20px;
   right: 20px;
   z-index: 9999;
-  background: rgba(255, 255, 255, 0.95);
+  background: rgba(255, 255, 255, 0.9);
   border-radius: 10px;
   padding: 10px;
   display: flex;
+  flex-direction: column;
   align-items: center;
   gap: 10px;
   box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
   border: 1px solid #ddd;
 ">
-  <audio id="bg-music" src="/uploads/summer.mp3" loop></audio>
+  <select id="song-selector" style="
+    margin-bottom: 10px;
+    padding: 5px;
+    border-radius: 6px;
+    border: 1px solid #ccc;
+    font-size: 14px;
+  ">
+    <option value="/music/summer.mp3">夏天</option>
+    <option value="/music/butterfly.mp3">蝴蝶</option>
+    <option value="/music/do_not_cry.mp3">不哭</option>
+    <option value="/music/Love_Song.mp3">love song</option>
+    <option value="/music/what.mp3">怎么了</option>
+  </select>
+  <audio id="bg-music" controls style="width: 100%;">
+    <source src="/music/song1.mp3" type="audio/mpeg">
+    你的浏览器不支持 audio 标签。
+  </audio>
   <button id="play-music" style="
-    padding: 8px 15px;
+    padding: 5px 10px;
     border-radius: 6px;
     border: none;
     background: #007bff;
@@ -45,16 +64,16 @@ const musicPlayerHTML = `
     cursor: pointer;
     transition: background 0.3s;
   ">▶ 播放音乐</button>
-  <span style="font-size: 12px; color: #666;">李玖哲 - 夏天</span>
 </div>
 <script>
   document.addEventListener('DOMContentLoaded', () => {
     const music = document.getElementById('bg-music');
     const btn = document.getElementById('play-music');
-    
+    const selector = document.getElementById('song-selector');
+
     // 设置音量
     music.volume = 0.7;
-    
+
     btn.addEventListener('click', () => {
       if (music.paused) {
         music.play().catch(error => {
@@ -69,13 +88,42 @@ const musicPlayerHTML = `
         btn.style.background = '#007bff';
       }
     });
-    
+
+    selector.addEventListener('change', () => {
+      music.src = selector.value;
+      music.play().catch(error => {
+        console.error('播放失败:', error);
+        alert('音乐播放失败，请检查音乐文件路径');
+      });
+      btn.innerText = '⏸ 暂停音乐';
+      btn.style.background = '#dc3545';
+    });
+
     // 添加错误处理
     music.addEventListener('error', (e) => {
       console.error('音频加载错误:', e);
       btn.disabled = true;
       btn.innerText = '❌ 加载失败';
       btn.style.background = '#6c757d';
+    });
+
+    const quotes = [
+      "生活就像一盒巧克力，你永远不知道下一颗是什么味道。",
+      "成功是百分之一的灵感加百分之九十九的汗水。",
+      "不要等待机会，而要创造机会。",
+      "人生最大的遗憾不是失败，而是从未尝试。",
+      "梦想是注定孤独的旅行，路上少不了质疑和嘲笑。"
+    ];
+    const quoteElement = document.getElementById('quote');
+    const newQuoteButton = document.getElementById('new-quote');
+
+    // 页面加载时随机显示语录
+    const randomIndexOnLoad = Math.floor(Math.random() * quotes.length);
+    quoteElement.textContent = quotes[randomIndexOnLoad];
+
+    newQuoteButton.addEventListener('click', () => {
+      const randomIndex = Math.floor(Math.random() * quotes.length);
+      quoteElement.textContent = quotes[randomIndex];
     });
   });
 </script>
@@ -119,132 +167,189 @@ let db;
       created_at DATETIME DEFAULT CURRENT_TIMESTAMP
     )
   `);
+
+  await db.exec(`
+    CREATE TABLE IF NOT EXISTS outfit (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      title TEXT,
+      content TEXT,
+      photo TEXT,
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    )
+  `);
 })();
 
 // ==================== 首页 ====================
 app.get("/", (req, res) => {
   res.send(`
-    <style>
-      body {
-        margin: 0;
-        font-family: Arial, sans-serif;
-        background: #f4f4f9;
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-      }
+    <head>
+      <meta charset="UTF-8">
+      <title>🌙 Moon's Blog</title>
+      <link rel="icon" type="image/png" href="/uploads/cfa2f28c.png">
+      <style>
+        body {
+          margin: 0;
+          font-family: Arial, sans-serif;
+          background: #f4f4f9;
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+        }
 
-      .hero {
-        height: 40vh;
-        width: 100%;
-        background: url("/uploads/sun.png") no-repeat center center;
-        background-size: cover;
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        color: white;
-        font-size: 2.5em;
-        font-weight: bold;
-      }
+        .hero {
+          height: 40vh;
+          width: 100%;
+          background: url("/uploads/sun.png") no-repeat center center;
+          background-size: cover;
+          display: flex;
+          justify-content: center;
+          align-items: center;
+          color: white;
+          font-size: 2.5em;
+          font-weight: bold;
+        }
 
-      .main {
-        display: flex;
-        justify-content: space-between;
-        width: 90%;
-        margin-top: 20px;
-      }
+        .main {
+          display: flex;
+          width: 90%;
+          margin-top: 20px;
+        }
 
-      /* 左侧功能卡片 */
-      .cards {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 20px;
-        flex: 2;
-      }
+        /* 左侧竖直导航栏 */
+        .sidebar {
+          width: 220px;
+          background: white;
+          border-radius: 12px;
+          box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+          padding: 20px;
+        }
 
-      .card {
-        background: rgba(255, 255, 255, 0.2);
-        backdrop-filter: blur(10px);
-        border-radius: 16px;
-        box-shadow: 0 4px 15px rgba(0,0,0,0.2);
-        width: 250px;
-        padding: 20px;
-        text-align: center;
-        color: white;
-      }
+        .sidebar h3 {
+          margin-top: 0;
+          font-size: 1.2em;
+          color: #333;
+          border-bottom: 1px solid #ddd;
+          padding-bottom: 10px;
+        }
 
-      /* 右侧个人卡片 */
-      .profile {
-        flex: 1;
-        margin-left: 20px;
-        background: white;
-        border-radius: 16px;
-        box-shadow: 0 4px 15px rgba(0,0,0,0.2);
-        padding: 20px;
-        text-align: center;
-      }
+        .sidebar ul {
+          list-style: none;
+          padding: 0;
+          margin: 0;
+        }
 
-      .profile img {
-        width: 60px;
-        margin-bottom: 10px;
-      }
+        .sidebar ul li {
+          margin: 15px 0;
+        }
 
-      .profile h2 {
-        margin: 10px 0 5px 0;
-      }
+        .sidebar ul li a {
+          text-decoration: none;
+          font-size: 1.1em;
+          color: #007bff;
+          transition: color 0.3s;
+        }
 
-      .profile a {
-        display: inline-block;
-        margin-top: 10px;
-        padding: 8px 15px;
-        border-radius: 8px;
-        background: #007bff;
-        color: white;
-        text-decoration: none;
-      }
+        .sidebar ul li a:hover {
+          color: #0056b3;
+        }
 
-      .profile a:hover {
-        background: #0056b3;
-      }
+        /* 右侧个人信息 */
+        .profile {
+          flex: 1;
+          margin-left: 20px;
+          background: white;
+          border-radius: 12px;
+          box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+          padding: 15px;
+          text-align: center;
+          width: 300px; /* 缩小卡片宽度 */
+        }
 
-      .music {
-        margin-top: 30px;
-        text-align: center;
-      }
-    </style>
+        .profile img {
+          width: 60px; /* 缩小头像大小 */
+          margin-bottom: 10px;
+          border-radius: 50%;
+        }
+
+        .profile h2 {
+          margin: 10px 0 5px 0;
+          font-size: 1.2em; /* 缩小标题字体 */
+        }
+
+        .profile p {
+          font-size: 0.9em; /* 缩小描述字体 */
+        }
+
+        .profile a {
+          display: inline-block;
+          margin-top: 10px;
+          padding: 6px 12px; /* 缩小按钮大小 */
+          border-radius: 6px;
+          background: #ffffffff;
+          color: white;
+          text-decoration: none;
+        }
+
+        .profile a:hover {
+          background: #f6faffff;
+        }
+
+        /* 社交媒体链接 */
+       .social-links a {
+  margin: 0 8px;
+  font-size: 24px;
+  color: #928fdcff;
+  transition: color 0.3s;
+}
+.social-links a:hover {
+  color: #eef6feff;
+}
+
+      </style>
+      <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
+
+    </head>
 
     <div class="hero">welcome to my blog </div>
 
     <div class="main">
-      <div class="cards">
-        <div class="card">
-          <h3>日记</h3>
-          <p><a href="/diary">写日记</a> | <a href="/diary-list">查看日记</a></p>
-        </div>
-        <div class="card">
-          <h3>美食</h3>
-          <p><a href="/food">记录美食</a> | <a href="/food-list">查看美食</a></p>
-        </div>
-        <div class="card">
-          <h3>笔记</h3>
-          <p><a href="/note">写笔记</a> | <a href="/note-list">查看笔记</a></p>
-        </div>
+      <!-- 左侧导航栏 -->
+      <div class="sidebar">
+        <h3>📂 分类导航</h3>
+        <ul>
+          <li><a href="/diary">📖 日记</a> | <a href="/diary-list">查看</a></li>
+          <li><a href="/food">🍜 美食</a> | <a href="/food-list">查看</a></li>
+          <li><a href="/note">💻 笔记</a> | <a href="/note-list">查看</a></li>
+          <li><a href="/outfit">👗 穿搭</a> | <a href="/outfit-list">查看</a></li>
+        </ul>
       </div>
 
-     <div class="profile">
-  <img src="/uploads/touxiang.png" alt="头像">
-  <h2> moon</h2>
-  <p>你可以叫我葛什么</p>
-  <p>文章 77 | 分类 1 | 标签 1 | 时间轴 76</p>
-  <a href="/about">了解我</a>
+      <!-- 右侧个人信息 -->
+      <div class="profile">
+        <img src="/uploads/touxiang.png" alt="头像">
+        <h2>moon</h2>
+        <p>你可以叫我葛什么</p>
+        <p>文章 77 | 分类 1 | 标签 1 | 时间轴 76</p>
+        <a href="/about">了解我</a>
+
+       <!-- 社交媒体链接 -->
+<div class="social-links">
+  <a href="https://github.com" target="_blank"><i class="fab fa-github"></i></a>
+  <a href="https://weixin.qq.com" target="_blank"><i class="fab fa-weixin"></i></a>
+  <a href="mailto:your-email@example.com"><i class="fas fa-envelope"></i></a>
+  <a href="https://www.zhihu.com" target="_blank"><i class="fab fa-zhihu"></i></a>
+  <a href="https://www.xiaohongshu.com" target="_blank"><i class="fas fa-book"></i></a>
 </div>
 
-    </div>
- 
+<!-- 日历功能 -->
+        <div class="calendar" style="margin-top: 20px;">
+          <iframe src="https://calendar.google.com/calendar/embed?src=zh-cn.china%23holiday%40group.v.calendar.google.com&ctz=Asia%2FShanghai" style="border: 0" width="300" height="300" frameborder="0" scrolling="no"></iframe>
+        </div>
 
- 
-      ${musicPlayerHTML}
-    
+      </div>
+    </div>
+
+    ${musicPlayerHTML}
   `);
 });
 
@@ -388,7 +493,7 @@ app.get("/note-list", async (req, res) => {
     `;
   });
   html += `<p><a href="/">返回首页</a></p>`;
-// 在页面底部加入音乐播放器
+  // 在页面底部加入音乐播放器
   html += musicPlayerHTML;
   res.send(html);
 });
@@ -422,7 +527,85 @@ app.get("/about", (req, res) => {
   `);
 });
 
-// ==================== 启动服务器 ====================
+// ==================== 日记、笔记、美食、穿搭的统一逻辑 ====================
+const sections = ["diary", "food", "note", "outfit"];
+
+sections.forEach(section => {
+  app.get(`/${section}`, (req, res) => {
+    res.send(`
+      <style>
+        body {
+          font-family: Arial, sans-serif;
+          background: url('/uploads/${section}-bg.jpg') no-repeat center center;
+          background-size: cover;
+          padding: 20px;
+          color: #333;
+        }
+
+        h2 {
+          font-size: 2.5em; /* Increased font size */
+          text-align: center;
+        }
+
+        form {
+          max-width: 600px;
+          margin: auto;
+          background: rgba(255, 255, 255, 0.9);
+          padding: 20px;
+          border-radius: 10px;
+          box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+        }
+
+        input, textarea, button {
+          font-size: 1.2em; /* Increased font size */
+          margin-bottom: 10px;
+        }
+      </style>
+
+      <h2>记录${section}</h2>
+      <form action="/${section}" method="post" enctype="multipart/form-data">
+        <input type="text" name="title" placeholder="标题" required><br><br>
+        <textarea name="content" placeholder="内容..." required></textarea><br><br>
+        <input type="file" name="photo" accept="image/*"><br><br>
+        <button type="submit">发布</button>
+      </form>
+      <p><a href="/">返回首页</a></p>
+    `);
+  });
+
+  app.post(`/${section}`, upload.single("photo"), async (req, res) => {
+    const { title, content } = req.body;
+    const photoPath = req.file ? "/uploads/" + req.file.filename : null;
+
+    await db.run(
+      `INSERT INTO ${section} (title, content, photo) VALUES (?, ?, ?)`,
+      [title, content, photoPath]
+    );
+
+    res.redirect(`/${section}-list`);
+  });
+
+  app.get(`/${section}-list`, async (req, res) => {
+    const rows = await db.all(
+      `SELECT * FROM ${section} ORDER BY created_at DESC`
+    );
+
+    let html = `<h2>我的${section}</h2>`;
+    rows.forEach(r => {
+      html += `
+        <div style="border:1px solid #ccc; margin:10px; padding:10px;">
+          <h3>${r.title}</h3>
+          <p>${r.content}</p>
+          ${r.photo ? `<img src="${r.photo}" style="max-width:200px;">` : ""}
+          <p><small>${r.created_at}</small></p>
+        </div>
+      `;
+    });
+    html += `<p><a href="/">返回首页</a></p>`;
+    res.send(html);
+  });
+});
+
 app.listen(port, () => {
-  console.log(`✅ 服务器已启动：http://localhost:${port}`);
+  console.log(`Server is running at http://localhost:${port}`);
 });

@@ -10,38 +10,40 @@
       background: #f4f4f9;
       margin: 0;
       padding: 0;
+      display: flex;
     }
 
-    header {
+    .sidebar {
+      width: 200px;
       background: #007bff;
       color: white;
-      padding: 10px 20px;
+      height: 100vh;
+      position: fixed;
+      top: 0;
+      left: 0;
       display: flex;
-      justify-content: space-between;
-      align-items: center;
+      flex-direction: column;
+      padding: 20px 10px;
+      box-shadow: 2px 0 5px rgba(0, 0, 0, 0.1);
     }
 
-    header h1 {
-      margin: 0;
-    }
-
-    nav button {
-      margin-left: 10px;
-      padding: 6px 12px;
-      border: none;
-      border-radius: 6px;
-      cursor: pointer;
-    }
-
-    nav button:hover {
-      background: #0056b3;
+    .sidebar a {
       color: white;
+      text-decoration: none;
+      margin: 10px 0;
+      padding: 10px;
+      border-radius: 6px;
+      transition: background 0.3s;
+    }
+
+    .sidebar a:hover {
+      background: #0056b3;
     }
 
     main {
+      margin-left: 220px;
       padding: 20px;
-      max-width: 800px;
-      margin: auto;
+      flex: 1;
     }
 
     .content-section {
@@ -130,17 +132,15 @@
   </style>
 </head>
 <body>
-  <header>
-    <h1>🌟 我的个人网站</h1>
-    <nav>
-      <button onclick="showSection('food')">🍜 美食</button>
-      <button onclick="showSection('diary')">📖 日记</button>
-      <button onclick="showSection('notes')">💻 笔记</button>
-      <button onclick="showSection('ddl')">📅 DDL</button>
-      <button onclick="showSection('album')">📸 相册</button>
-      <button onclick="showSection('music')">🎵 音乐</button>
-    </nav>
-  </header>
+  <div class="sidebar">
+    <a href="#food">🍜 美食</a>
+    <a href="#diary">📖 日记</a>
+    <a href="#notes">💻 笔记</a>
+    <a href="#ddl">📅 DDL</a>
+    <a href="#album">📸 相册</a>
+    <a href="#music">🎵 音乐</a>
+    <a href="#moon">🌙 月亮</a>
+  </div>
 
   <main>
     <!-- 美食 -->
@@ -155,19 +155,20 @@
     </section>
 
     <!-- 日记 -->
-    <section id="diary" class="content-section hidden">
+    <section id="diary" class="content-section">
       <div class="section-header">📖 写日记</div>
       <form action="/diary" method="post" enctype="multipart/form-data">
         <input type="text" name="title" placeholder="标题" required><br><br>
         <textarea name="content" placeholder="内容..." required></textarea><br><br>
-        <input type="file" name="photo" accept="image/*"><br><br>
+        <label for="photo">上传照片：</label>
+        <input type="file" id="photo" name="photo" accept="image/*"><br><br>
         <button type="submit">发布</button>
       </form>
       <div class="postList" id="diaryPosts"></div>
     </section>
 
     <!-- 笔记 -->
-    <section id="notes" class="content-section hidden">
+    <section id="notes" class="content-section">
       <div class="section-header">💻 学习笔记</div>
       <form class="postForm" data-type="notes">
         <input type="text" name="title" placeholder="笔记标题" required>
@@ -178,10 +179,11 @@
     </section>
 
     <!-- DDL -->
-    <section id="ddl" class="content-section hidden">
+    <section id="ddl" class="content-section">
       <div class="section-header">📅 DDL 倒计时</div>
       <form id="ddlForm">
         <input type="text" id="ddlTitle" placeholder="任务" required>
+        <label for="ddlDate">选择日期：</label>
         <input type="date" id="ddlDate" required>
         <button type="submit">添加</button>
       </form>
@@ -189,10 +191,11 @@
     </section>
 
     <!-- 相册 -->
-    <section id="album" class="content-section hidden">
+    <section id="album" class="content-section">
       <div class="section-header">📸 我的相册</div>
       <form id="photoForm" enctype="multipart/form-data">
-        <input type="file" name="photo" accept="image/*" required>
+        <label for="photoUpload">上传照片：</label>
+        <input type="file" id="photoUpload" name="photo" accept="image/*" required>
         <button type="submit">上传</button>
       </form>
       <div id="photoGallery" class="gallery"></div>
